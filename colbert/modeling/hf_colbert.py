@@ -30,8 +30,6 @@ base_class_mapping={
     # bertimbau
     "neuralmind/bert-base-portuguese-cased": BertPreTrainedModel,
     "neuralmind/bert-large-portuguese-cased": BertPreTrainedModel
-
-
 }
 
 model_object_mapping = {

@@ -24,7 +24,9 @@ class Trainer:
         # Resources don't come from the config object. They come from the input parameters.
         # TODO: After the API stabilizes, make this "self.config.assign()" to emphasize this distinction.
         self.configure(triples=self.triples, queries=self.queries, collection=self.collection)
-        self.configure(checkpoint=checkpoint)
+        # marcospiau changed this to use the checkpoint passed as parameter
+        # self.configure(checkpoint=checkpoint)
+        self.configure(checkpoint=self.config.checkpoint)
 
         launcher = Launcher(train)
 
