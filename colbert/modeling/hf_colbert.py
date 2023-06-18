@@ -26,7 +26,10 @@ base_class_mapping={
     "bert-base-uncased": BertPreTrainedModel,
     "bert-large-uncased": BertPreTrainedModel,
     "microsoft/mdeberta-v3-base": DebertaV2PreTrainedModel,
-    "bert-base-multilingual-uncased": BertPreTrainedModel
+    "bert-base-multilingual-uncased": BertPreTrainedModel,
+    # bertimbau
+    "neuralmind/bert-base-portuguese-cased": BertPreTrainedModel,
+    "neuralmind/bert-large-portuguese-cased": BertPreTrainedModel
 
 
 }
@@ -39,8 +42,10 @@ model_object_mapping = {
     "bert-base-uncased": BertModel,
     "bert-large-uncased": BertModel,
     "microsoft/mdeberta-v3-base": DebertaV2Model,
-    "bert-base-multilingual-uncased": BertModel
-
+    "bert-base-multilingual-uncased": BertModel,
+    # bertimbau
+    "neuralmind/bert-base-portuguese-cased": BertModel,
+    "neuralmind/bert-large-portuguese-cased": BertModel
 }
 
 
