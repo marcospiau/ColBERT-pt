@@ -125,7 +125,7 @@ def train(config: ColBERTConfig, triples, queries=None, collection=None):
 
                 loss = loss / config.accumsteps
 
-            if config.rank < 1:
+            if config.rank < 1 and config.stdout_log_every:
                 print_progress(scores)
 
             amp.backward(loss)

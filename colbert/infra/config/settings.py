@@ -130,6 +130,7 @@ class TrainingSettings:
 
     maxsteps: int = DefaultVal(500_000)
 
+    # this is not being used! 
     save_every: int = DefaultVal(None)
 
     resume: bool = DefaultVal(False)
@@ -152,6 +153,9 @@ class TrainingSettings:
     ignore_scores: bool = DefaultVal(False)
 
     model_name: str = DefaultVal(None) # DefaultVal('bert-base-uncased')
+
+    # marcospoiau
+    stdout_log_every: int = DefaultVal(100)
 
 @dataclass
 class IndexingSettings:
