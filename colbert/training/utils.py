@@ -7,7 +7,9 @@ from colbert.parameters import SAVED_CHECKPOINTS
 from colbert.infra.run import Run
 
 
-def print_progress(scores):
+def print_progress(scores, batch_idx=None):
+    if batch_idx is not None:
+        print_message(f"print_progress: Batch #{batch_idx}:")
     positive_avg, negative_avg = round(scores[:, 0].mean().item(), 2), round(scores[:, 1].mean().item(), 2)
     print("#>>>   ", positive_avg, negative_avg, '\t\t|\t\t', positive_avg - negative_avg)
 
