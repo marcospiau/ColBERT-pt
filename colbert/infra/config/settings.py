@@ -126,7 +126,7 @@ class TrainingSettings:
 
     accumsteps: int = DefaultVal(1)
 
-    lr: float = DefaultVal(3e-06)
+    lr: float = DefaultVal(1e-5)
 
     maxsteps: int = DefaultVal(500_000)
 
@@ -136,7 +136,7 @@ class TrainingSettings:
     resume: bool = DefaultVal(False)
 
     ## NEW:
-    warmup: int = DefaultVal(None)
+    warmup: int = DefaultVal(20_000)
 
     warmup_bert: int = DefaultVal(None)
 
@@ -144,7 +144,7 @@ class TrainingSettings:
 
     nway: int = DefaultVal(2)
 
-    use_ib_negatives: bool = DefaultVal(False)
+    use_ib_negatives: bool = DefaultVal(True)
 
     reranker: bool = DefaultVal(False)
 
