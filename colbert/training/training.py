@@ -151,7 +151,7 @@ def train(config: ColBERTConfig, triples, queries=None, collection=None):
 
         train_loss = this_batch_loss if train_loss is None else train_loss
         train_loss = train_loss_mu * train_loss + (1 - train_loss_mu) * this_batch_loss
-        logs['train_loss'] = train_loss.item()
+        logs['train_loss'] = train_loss
 
         amp.step(colbert, optimizer, scheduler)
 
