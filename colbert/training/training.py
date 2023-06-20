@@ -93,7 +93,10 @@ def train(config: ColBERTConfig, triples, queries=None, collection=None):
         this_batch_loss = 0.0
 
         # limiting the number of print messages
-        should_print_batch = (batch_idx == 0 or config.stdout_log_every % batch_idx == 0) and config.rank < 1
+        should_print_batch = (
+            batch_idx <= 10 or 
+            (batch_idx == 0 or config.stdout_log_every % batch_idx == 0) and
+            config.rank < 1)
 
         for batch in BatchSteps:
             with amp.context():
