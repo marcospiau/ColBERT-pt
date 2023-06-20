@@ -144,7 +144,7 @@ def train(config: ColBERTConfig, triples, queries=None, collection=None):
         if should_print_batch:
             print_message(batch_idx, train_loss)
         # CHECAR ESSE CARA
-        if config.rank < 1 and config.save_every % batch_idx == 0:
+        if config.rank < 1 and (batch_idx == 0 or config.save_every % batch_idx == 0):
             manage_checkpoints(config, colbert, optimizer, batch_idx+1,
                                savepath=None)
 
