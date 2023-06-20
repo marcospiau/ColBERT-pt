@@ -23,7 +23,7 @@ import wandb
 
 def train(config: ColBERTConfig, triples, queries=None, collection=None):
     config.checkpoint = config.checkpoint or 'bert-base-uncased'
-    wandb_run = wandb.init(**config.wandb, config=vars(config))
+    wandb_run = wandb.init(**config.wandb.val, config=vars(config))
 
     if config.rank < 1:
         config.help()
@@ -166,6 +166,8 @@ def train(config: ColBERTConfig, triples, queries=None, collection=None):
         if config.rank < 1 and (batch_idx == 0 or config.save_every % batch_idx == 0):
             manage_checkpoints(config, colbert, optimizer, batch_idx+1,
                                savepath=None)
+    # finish wandb logging
+    wandb.finish()
 
     if config.rank < 1:
         print_message("#> Done with all triples!")
