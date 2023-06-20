@@ -159,7 +159,7 @@ class TrainingSettings:
 
     # wandb stuff
     wandb = DefaultVal(dict(
-        wandb_project='colbert-pt-br',
+        project='colbert-pt-br',
         # set to 'disable' to disable wandb
         mode='online'
     ))
