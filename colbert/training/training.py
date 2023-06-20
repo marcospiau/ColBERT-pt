@@ -78,6 +78,7 @@ def train(config: ColBERTConfig, triples, queries=None, collection=None):
 
     start_batch_idx = 0
 
+    # WHY IS THIS COMMENTED?
     # if config.resume:
     #     assert config.checkpoint is not None
     #     start_batch_idx = checkpoint['batch']
@@ -90,6 +91,8 @@ def train(config: ColBERTConfig, triples, queries=None, collection=None):
             warmup_bert = None
 
         this_batch_loss = 0.0
+
+        should_print_batch = (batch_idx == 0 or config.stdout_log_every % batch_idx == 0) and config.rank < 1
 
         for batch in BatchSteps:
             with amp.context():
@@ -117,16 +120,14 @@ def train(config: ColBERTConfig, triples, queries=None, collection=None):
                 else:
                     loss = nn.CrossEntropyLoss()(scores, labels[:scores.size(0)])
 
-                if config.use_ib_negatives:
-                    if config.rank < 1:
-                        print('\t\t\t\t', loss.item(), ib_loss.item())
+                if config.use_ib_negatives and should_print_batch:
+                    print('\t\t\t\t', loss.item(), ib_loss.item())
 
                     loss += ib_loss
 
                 loss = loss / config.accumsteps
 
-            if config.rank < 1 and (
-                batch_idx == 0 or config.stdout_log_every % batch_idx == 0):
+            if should_print_batch:
                 print_progress(scores)
 
             amp.backward(loss)
@@ -138,9 +139,13 @@ def train(config: ColBERTConfig, triples, queries=None, collection=None):
 
         amp.step(colbert, optimizer, scheduler)
 
-        if config.rank < 1:
+        # if config.rank < 1:
+        if should_print_batch:
             print_message(batch_idx, train_loss)
-            manage_checkpoints(config, colbert, optimizer, batch_idx+1, savepath=None)
+        # CHECAR ESSE CARA
+        if config.rank < 1 and config.save_every % batch_idx == 0:
+            manage_checkpoints(config, colbert, optimizer, batch_idx+1,
+                               savepath=None)
 
     if config.rank < 1:
         print_message("#> Done with all triples!")
