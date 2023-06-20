@@ -158,10 +158,11 @@ class TrainingSettings:
     stdout_log_every: int = DefaultVal(100)
 
     # wandb stuff
-    wandb_project: str = DefaultVal('colbert-pt-br')
-    wandb_entity: str = DefaultVal(None)
-    wandb_run_name: str = DefaultVal(None)
-    wandb_run_group: str = DefaultVal(None)
+    wandb = DefaultVal(dict(
+        wandb_project='colbert-pt-br',
+        # set to 'disable' to disable wandb
+        mode='online'
+    ))
     
 
 

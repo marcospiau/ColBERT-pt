@@ -17,11 +17,14 @@ from colbert.modeling.reranker.electra import ElectraReranker
 
 from colbert.utils.utils import print_message
 from colbert.training.utils import print_progress, manage_checkpoints
+import wandb
 
 
 
 def train(config: ColBERTConfig, triples, queries=None, collection=None):
     config.checkpoint = config.checkpoint or 'bert-base-uncased'
+    wandb_config = config.wandb.to_dict()
+    wandb_logger = wandb.init(wandb_config, config=vars(config))
 
     if config.rank < 1:
         config.help()
@@ -35,6 +38,7 @@ def train(config: ColBERTConfig, triples, queries=None, collection=None):
     config.bsize = config.bsize // config.nranks
 
     print("Using config.bsize =", config.bsize, "(per process) and config.accumsteps =", config.accumsteps)
+
 
     if collection is not None:
         if config.reranker:
@@ -99,6 +103,7 @@ def train(config: ColBERTConfig, triples, queries=None, collection=None):
             config.rank < 1)
 
         for batch in BatchSteps:
+            logs = {}
             with amp.context():
                 try:
                     queries, passages, target_scores = batch
@@ -124,12 +129,19 @@ def train(config: ColBERTConfig, triples, queries=None, collection=None):
                 else:
                     loss = nn.CrossEntropyLoss()(scores, labels[:scores.size(0)])
 
+                logs['loss'] = loss.item()
+                logs['total_loss'] = loss.item()
+                if config.use_ib_negatives:
+                    logs['ib_loss'] = ib_loss.item()
+                    logs['total_loss'] += ib_loss.item()
+
                 if config.use_ib_negatives and should_print_batch:
                     print('\t\t\t\t', loss.item(), ib_loss.item())
 
                     loss += ib_loss
 
                 loss = loss / config.accumsteps
+                logs['loss_div_accumsteps'] = logs['loss'] / config.accumsteps
 
             if should_print_batch:
                 print_progress(scores, batch_idx=batch_idx)
@@ -140,8 +152,13 @@ def train(config: ColBERTConfig, triples, queries=None, collection=None):
 
         train_loss = this_batch_loss if train_loss is None else train_loss
         train_loss = train_loss_mu * train_loss + (1 - train_loss_mu) * this_batch_loss
+        logs['train_loss'] = train_loss.item()
 
         amp.step(colbert, optimizer, scheduler)
+
+        # log everything to wandb
+        if config.rank < 1:
+            wandb.log(logs)
 
         # if config.rank < 1:
         if should_print_batch:
