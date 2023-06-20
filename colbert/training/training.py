@@ -23,8 +23,7 @@ import wandb
 
 def train(config: ColBERTConfig, triples, queries=None, collection=None):
     config.checkpoint = config.checkpoint or 'bert-base-uncased'
-    wandb_config = config.wandb.to_dict()
-    wandb_logger = wandb.init(wandb_config, config=vars(config))
+    wandb_run = wandb.init(**config.wandb, config=vars(config))
 
     if config.rank < 1:
         config.help()
