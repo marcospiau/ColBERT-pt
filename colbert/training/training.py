@@ -132,7 +132,7 @@ def train(config: ColBERTConfig, triples, queries=None, collection=None):
                 loss = loss / config.accumsteps
 
             if should_print_batch:
-                print_progress(scores)
+                print_progress(scores, batch_idx=batch_idx)
 
             amp.backward(loss)
 
