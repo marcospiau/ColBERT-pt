@@ -26,6 +26,9 @@ class BaseColBERT(torch.nn.Module):
         try:
             HF_ColBERT = class_factory(self.name)
         except:
+            # raising instead of falling back to bert-base-uncased
+            # because we want to make sure that the model name is correct
+            raise ValueError(f"Could not find a model named '{self.name}'.")
             self.name = 'bert-base-uncased' # TODO: Double check that this is appropriate here in all cases
             HF_ColBERT = class_factory(self.name)
 

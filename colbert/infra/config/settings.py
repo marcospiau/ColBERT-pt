@@ -154,8 +154,16 @@ class TrainingSettings:
 
     model_name: str = DefaultVal(None) # DefaultVal('bert-base-uncased')
 
-    # marcospoiau
+    # marcospiau
     stdout_log_every: int = DefaultVal(100)
+
+    # wandb stuff
+    wandb_project: str = DefaultVal('colbert-pt-br')
+    wandb_entity: str = DefaultVal(None)
+    wandb_run_name: str = DefaultVal(None)
+    wandb_run_group: str = DefaultVal(None)
+    
+
 
 @dataclass
 class IndexingSettings:
