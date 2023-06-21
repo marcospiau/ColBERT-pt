@@ -71,5 +71,5 @@ class LazyBatcher():
         return self.tensorize_triples(queries, passages, scores, self.bsize // self.accumsteps, self.nway)
 
     def skip_to_batch(self, batch_idx, intended_batch_size):
-        Run.warn(f'Skipping to batch #{batch_idx} (with intended_batch_size = {intended_batch_size}) for training.')
+        print_message(f'Skipping to batch #{batch_idx} (with intended_batch_size = {intended_batch_size}) for training.')
         self.position = intended_batch_size * batch_idx
