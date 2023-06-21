@@ -143,7 +143,7 @@ def train(config: ColBERTConfig, triples, queries=None, collection=None):
 
         # limiting the number of print messages
         should_print_batch = (
-            batch_idx <= 10 or 
+            batch_idx + start_batch_idx <= 10 or 
             (batch_idx == 0 or batch_idx % config.stdout_log_every == 0) and
             config.rank < 1)
 
@@ -207,7 +207,7 @@ def train(config: ColBERTConfig, triples, queries=None, collection=None):
 
         # log everything to wandb
         if config.rank < 1:
-            wandb.log(logs)
+            wandb.log(logs, step=batch_idx)
 
         # if config.rank < 1:
         if should_print_batch:
