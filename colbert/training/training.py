@@ -133,8 +133,6 @@ def train(config: ColBERTConfig, triples, queries=None, collection=None):
     seen_batches = 0
 
     for batch_idx, BatchSteps in zip(range(start_batch_idx, config.maxsteps), reader):
-        seen_examples += config.bsize
-        seen_batches += 1
         if (warmup_bert is not None) and warmup_bert <= batch_idx:
             set_bert_grad(colbert, True)
             warmup_bert = None
@@ -198,8 +196,8 @@ def train(config: ColBERTConfig, triples, queries=None, collection=None):
         train_loss = this_batch_loss if train_loss is None else train_loss
         train_loss = train_loss_mu * train_loss + (1 - train_loss_mu) * this_batch_loss
         logs['train_loss'] = train_loss
-        logs['seen_examples'] = seen_examples
-        logs['seen_batches'] = seen_batches
+        logs['seen_examples'] = (batch_idx + 1) * config.bsize
+        logs['seen_batches'] = batch_idx + 1
 
         amp.step(colbert, optimizer, scheduler)
         logs['learning_rate'] = scheduler.get_lr()[0] if scheduler is not None else config.lr
