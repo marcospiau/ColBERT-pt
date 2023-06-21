@@ -157,6 +157,7 @@ class TrainingSettings:
     # marcospiau
     stdout_log_every: int = DefaultVal(100)
     checkpoints_path: str = DefaultVal('checkpoints_path')
+    continue_from_checkpoint: str = DefaultVal(None)
 
     # wandb stuff
     wandb = DefaultVal(dict(

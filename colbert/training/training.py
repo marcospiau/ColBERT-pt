@@ -36,6 +36,26 @@ def save_checkpoint_v2(colbert, optimizer, batch_idx, checkpoints_path):
     torch.save(checkpoint, path_save)
     return path_save
 
+def load_checkpoint_v2(path, colbert, optimizer):
+    print(f"#> Loading a checkpoint from {path} ..")
+    checkpoint = torch.load(path)
+    if 'model_state_dict' in checkpoint:
+        print_message("#> Loading model_state_dict")
+        colbert.load_state_dict(checkpoint.pop('model_state_dict'))
+    else:
+        print_message("#> No model_state_dict found")
+    if 'optimizer_state_dict' in checkpoint:
+        print_message("#> Loading optimizer_state_dict")
+        optimizer.load_state_dict(checkpoint.pop('optimizer_state_dict'))
+    else:
+        print_message("#> No optimizer_state_dict found")
+    if 'batch' in checkpoint:
+        print_message("#> Loading batch")
+        batch = checkpoint.pop('batch', 0)
+    else:
+        print_message("#> No batch found")
+    return batch
+
 
 def train(config: ColBERTConfig, triples, queries=None, collection=None):
     config.checkpoint = config.checkpoint or 'bert-base-uncased'
@@ -97,12 +117,18 @@ def train(config: ColBERTConfig, triples, queries=None, collection=None):
 
     start_batch_idx = 0
 
-    # WHY IS THIS COMMENTED?
-    # if config.resume:
-    #     assert config.checkpoint is not None
-    #     start_batch_idx = checkpoint['batch']
+    # Restart training from a checkpoint
+    if config.continue_from_checkpoint is not None:
+        start_batch_idx = load_checkpoint_v2(
+            path=config.continue_from_checkpoint,
+            colbert=colbert,
+            optimizer=optimizer)
+        reader.skip_to_batch(start_batch_idx, config.bsize)
+        # advance the scheduler
+        if scheduler is not None:
+            for _ in range(start_batch_idx):
+                scheduler.step()
 
-    #     reader.skip_to_batch(start_batch_idx, checkpoint['arguments']['bsize'])
     seen_examples = 0
     seen_batches = 0
 
