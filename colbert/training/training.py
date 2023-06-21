@@ -172,7 +172,6 @@ def train(config: ColBERTConfig, triples, queries=None, collection=None):
         train_loss = this_batch_loss if train_loss is None else train_loss
         train_loss = train_loss_mu * train_loss + (1 - train_loss_mu) * this_batch_loss
         logs['train_loss'] = train_loss
-        logs['train_loss_mu'] = train_loss_mu
         logs['seen_examples'] = seen_examples
         logs['seen_batches'] = seen_batches
 
