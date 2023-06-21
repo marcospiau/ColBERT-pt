@@ -11,7 +11,7 @@ from colbert.data.collection import Collection
 from colbert.data.queries import Queries
 from colbert.data.examples import Examples
 
-# from colbert.utils.runs import Run
+from colbert.utils.runs import Run
 
 
 class LazyBatcher():
@@ -70,6 +70,6 @@ class LazyBatcher():
 
         return self.tensorize_triples(queries, passages, scores, self.bsize // self.accumsteps, self.nway)
 
-    # def skip_to_batch(self, batch_idx, intended_batch_size):
-    #     Run.warn(f'Skipping to batch #{batch_idx} (with intended_batch_size = {intended_batch_size}) for training.')
-    #     self.position = intended_batch_size * batch_idx
+    def skip_to_batch(self, batch_idx, intended_batch_size):
+        Run.warn(f'Skipping to batch #{batch_idx} (with intended_batch_size = {intended_batch_size}) for training.')
+        self.position = intended_batch_size * batch_idx
