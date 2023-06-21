@@ -19,9 +19,11 @@ from colbert.utils.utils import print_message
 from colbert.training.utils import print_progress, manage_checkpoints
 import os
 import wandb
+from pathlib import Path
 
 
 def save_checkpoint_v2(colbert, optimizer, batch_idx, checkpoints_path):
+    Path(checkpoints_path).mkdir(parents=True, exist_ok=True)
     path_save = os.path.join(checkpoints_path, f"checkpoint-{batch_idx}.pt")
     print(f"#> Saving a checkpoint to {path_save} ..")
     # save model state
