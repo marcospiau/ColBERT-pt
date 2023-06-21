@@ -107,7 +107,7 @@ class ResourceSettings:
 @dataclass
 class DocSettings:
     dim: int = DefaultVal(128)
-    doc_maxlen: int = DefaultVal(220)
+    doc_maxlen: int = DefaultVal(300)
     mask_punctuation: bool = DefaultVal(True)
 
 

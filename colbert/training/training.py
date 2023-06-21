@@ -154,6 +154,7 @@ def train(config: ColBERTConfig, triples, queries=None, collection=None):
         logs['train_loss'] = train_loss
 
         amp.step(colbert, optimizer, scheduler)
+        logs['learning_rate'] = scheduler.get_lr()[0] if scheduler is not None else config.lr
 
         # log everything to wandb
         if config.rank < 1:
