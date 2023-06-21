@@ -17,8 +17,22 @@ from colbert.modeling.reranker.electra import ElectraReranker
 
 from colbert.utils.utils import print_message
 from colbert.training.utils import print_progress, manage_checkpoints
+import os
 import wandb
 
+
+def save_checkpoint_v2(colbert, optimizer, batch_idx, checkpoints_path):
+    path_save = os.path.join(checkpoints_path, f"checkpoint-{batch_idx}.pt")
+    print(f"#> Saving a checkpoint to {path_save} ..")
+    # save model state
+    # colbert.save(path_save)
+    # save training state
+    checkpoint = {}
+    checkpoint['batch'] = batch_idx
+    checkpoint['model_state_dict'] = colbert.state_dict()
+    checkpoint['optimizer_state_dict'] = optimizer.state_dict()
+    torch.save(checkpoint, path_save)
+    return path_save
 
 
 def train(config: ColBERTConfig, triples, queries=None, collection=None):
@@ -87,8 +101,12 @@ def train(config: ColBERTConfig, triples, queries=None, collection=None):
     #     start_batch_idx = checkpoint['batch']
 
     #     reader.skip_to_batch(start_batch_idx, checkpoint['arguments']['bsize'])
+    seen_examples = 0
+    seen_batches = 0
 
     for batch_idx, BatchSteps in zip(range(start_batch_idx, config.maxsteps), reader):
+        seen_examples += config.bsize
+        seen_batches += 1
         if (warmup_bert is not None) and warmup_bert <= batch_idx:
             set_bert_grad(colbert, True)
             warmup_bert = None
@@ -152,6 +170,9 @@ def train(config: ColBERTConfig, triples, queries=None, collection=None):
         train_loss = this_batch_loss if train_loss is None else train_loss
         train_loss = train_loss_mu * train_loss + (1 - train_loss_mu) * this_batch_loss
         logs['train_loss'] = train_loss
+        logs['train_loss_mu'] = train_loss_mu
+        logs['seen_examples'] = seen_examples
+        logs['seen_batches'] = seen_batches
 
         amp.step(colbert, optimizer, scheduler)
         logs['learning_rate'] = scheduler.get_lr()[0] if scheduler is not None else config.lr
@@ -164,18 +185,22 @@ def train(config: ColBERTConfig, triples, queries=None, collection=None):
         if should_print_batch:
             print_message(batch_idx, train_loss)
         # CHECAR ESSE CARA
-        if config.rank < 1 and (batch_idx == 0 or config.save_every % batch_idx == 0):
-            manage_checkpoints(config, colbert, optimizer, batch_idx+1,
-                               savepath=None)
+        if config.rank < 1 and (
+            # first step
+            batch_idx == 0
+            # during training
+            or config.stdout_log_every % batch_idx == 0
+            # last step
+            or batch_idx == config.maxsteps - 1
+        ):
+            print_message(f'#> Saving checkpoint... batch_idx = {batch_idx}')
+            save_checkpoint_v2(
+                colbert=colbert,
+                optimizer=optimizer,
+                batch_idx=batch_idx,
+                checkpoints_path=config.checkpoints_path)
     # finish wandb logging
     wandb.finish()
-
-    if config.rank < 1:
-        print_message("#> Done with all triples!")
-        ckpt_path = manage_checkpoints(config, colbert, optimizer, batch_idx+1, savepath=None, consumed_all_triples=True)
-
-        return ckpt_path  # TODO: This should validate and return the best checkpoint, not just the last one.
-
 
 
 def set_bert_grad(colbert, value):
