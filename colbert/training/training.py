@@ -178,6 +178,7 @@ def train(config: ColBERTConfig, triples, queries=None, collection=None):
 
         amp.step(colbert, optimizer, scheduler)
         logs['learning_rate'] = scheduler.get_lr()[0] if scheduler is not None else config.lr
+        logs['batch_idx'] = batch_idx
 
         # log everything to wandb
         if config.rank < 1:
@@ -191,7 +192,7 @@ def train(config: ColBERTConfig, triples, queries=None, collection=None):
             # first step
             batch_idx == 0
             # during training
-            or config.stdout_log_every % batch_idx == 0
+            or config.save_every % batch_idx == 0
             # last step
             or batch_idx == config.maxsteps - 1
         ):
