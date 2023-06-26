@@ -33,8 +33,8 @@ parser.add_argument('--k',
                     default=1_000,
                     type=int,
                     help='How many documents to retrieve per query.')
-parser.add_argument('--output_path',
-                    default='output_path.tsv',
+parser.add_argument('--save_path',
+                    default='save_path.tsv',
                     type=str,
                     help='Where to save the ranking results.')
 
