@@ -37,6 +37,7 @@ parser.add_argument('--nbits',
 
 if __name__ == '__main__':
     args = parser.parse_args()
+    # run configs are mostly kept fixed to the defaults
     with Run().context(RunConfig(nranks=1, experiment='msmarco')):
         config = ColBERTConfig.load_from_checkpoint(args.checkpoint)
         config.configure(
