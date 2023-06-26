@@ -51,4 +51,9 @@ if __name__ == '__main__':
         queries = Queries(args.queries)
         ranking = searcher.search_all(queries, k=args.k)
         print(f'ranking is:\n {ranking}')
-        ranking.save(args.save_path)
+        # manually save the ranking
+        with open(args.save_path, 'w') as f:
+            for items in ranking.flat_ranking:
+                f.write('\t'.join(
+                    map(lambda x: str(int(x) if type(x) is bool else x),
+                        items)) + '\n')
