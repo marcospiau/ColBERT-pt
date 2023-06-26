@@ -8,10 +8,13 @@ from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
 from colbert import Searcher
 from colbert.data import Queries
 from colbert.infra import ColBERTConfig, Run, RunConfig
+import os
 
 def flat_ranking_to_trec_run(flat_ranking, save_path):
-    fmt_str = '{qid} Q0 {pid} {rank} {score} X\n'
+    fmt_str = '{qid}\tQ0\t{pid}\t{rank}\t{score} X\n'
     total_lines = len(flat_ranking)
+    # create directory tree if not exists
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
     with open(save_path, 'w') as f:
         for qid, pid, rank, score in flat_ranking:
             f.write(fmt_str.format(qid=qid, pid=pid, rank=rank, score=score))
@@ -61,8 +64,3 @@ if __name__ == '__main__':
         print(f'ranking is:\n {ranking}')
         # manually save ranking results with trec format
         flat_ranking_to_trec_run(ranking.flat_ranking, args.save_path)
-        # with open(args.save_path, 'w') as f:
-        #     for items in ranking.flat_ranking:
-        #         f.write('\t'.join(
-        #             map(lambda x: str(int(x) if type(x) is bool else x),
-        #                 items)) + '\n')
