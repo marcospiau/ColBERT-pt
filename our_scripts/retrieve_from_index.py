@@ -50,4 +50,5 @@ if __name__ == '__main__':
         searcher = Searcher(index=args.index_name, config=config)
         queries = Queries(args.queries)
         ranking = searcher.search_all(queries, k=args.k)
+        print(f'ranking is:\n {ranking}')
         ranking.save(args.save_path)
