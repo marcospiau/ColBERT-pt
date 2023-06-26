@@ -9,6 +9,14 @@ from colbert import Searcher
 from colbert.data import Queries
 from colbert.infra import ColBERTConfig, Run, RunConfig
 
+def flat_ranking_to_trec_run(flat_ranking, save_path):
+    fmt_str = '{qid} Q0 {pid} {rank} {score} X\n'
+    total_lines = len(flat_ranking)
+    with open(save_path, 'w') as f:
+        for qid, pid, rank, score in flat_ranking:
+            f.write(fmt_str.format(qid=qid, pid=pid, rank=rank, score=score))
+    print(f'Saved {total_lines} lines to {save_path}.')
+
 parser = ArgumentParser(
     description='Index the MS MARCO passage collection with ColBERT.',
     formatter_class=ArgumentDefaultsHelpFormatter)
@@ -51,9 +59,10 @@ if __name__ == '__main__':
         queries = Queries(args.queries)
         ranking = searcher.search_all(queries, k=args.k)
         print(f'ranking is:\n {ranking}')
-        # manually save the ranking
-        with open(args.save_path, 'w') as f:
-            for items in ranking.flat_ranking:
-                f.write('\t'.join(
-                    map(lambda x: str(int(x) if type(x) is bool else x),
-                        items)) + '\n')
+        # manually save ranking results with trec format
+        flat_ranking_to_trec_run(ranking.flat_ranking, args.save_path)
+        # with open(args.save_path, 'w') as f:
+        #     for items in ranking.flat_ranking:
+        #         f.write('\t'.join(
+        #             map(lambda x: str(int(x) if type(x) is bool else x),
+        #                 items)) + '\n')
