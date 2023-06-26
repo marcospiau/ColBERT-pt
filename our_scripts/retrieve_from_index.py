@@ -21,7 +21,7 @@ parser.add_argument('--index_root',
                     default='indexes/mmarco-pt-full',
                     type=str,
                     help='The root directory of the index.')
-parser.add_argument('--queries_path',
+parser.add_argument('--queries',
                     default='/path/to_queries.tsv',
                     type=str,
                     help='The path to the queries.')
@@ -48,6 +48,6 @@ if __name__ == '__main__':
         pprint.pprint(config)
         config.configure(root=args.index_root)
         searcher = Searcher(index=args.index_name, config=config)
-        queries = Queries(args.queries_path)
+        queries = Queries(args.queries)
         ranking = searcher.search_all(queries, k=args.k)
         ranking.save(args.save_path)
