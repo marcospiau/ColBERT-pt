@@ -40,6 +40,7 @@ if __name__ == '__main__':
     # run configs are mostly kept fixed to the defaults
     with Run().context(RunConfig(nranks=1, experiment='msmarco')):
         config = ColBERTConfig.load_from_checkpoint(args.checkpoint)
+        assert config is not None, f'Could not load checkpoint from {args.checkpoint}'
         config.configure(
             nbits=args.nbits,
             root=args.index_root,
