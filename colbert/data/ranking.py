@@ -62,6 +62,8 @@ class Ranking:
 
     def save(self, new_path):
         assert 'tsv' in new_path.strip('/').split('/')[-1].split('.'), "TODO: Support .json[l] too."
+        # make parents
+        os.makedirs(os.path.dirname(new_path), exist_ok=True)
 
         with Run().open(new_path, 'w') as f:
             for items in self.flat_ranking:
