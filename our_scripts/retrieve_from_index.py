@@ -5,7 +5,8 @@ we will use the default configuration and only expose basic configurations.
 import pprint
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
 
-from colbert import Indexer
+from colbert import Searcher
+from colbert.data import Queries
 from colbert.infra import ColBERTConfig, Run, RunConfig
 
 parser = ArgumentParser(
@@ -16,25 +17,26 @@ parser.add_argument('--checkpoint',
                     type=str,
                     help='The checkpoint to use.')
 # bool resume flag
-parser.add_argument('--resume',
-                    action='store_true',
-                    help='Resume from the checkpoint.')
 parser.add_argument('--index_root',
                     default='indexes/mmarco-pt-full',
                     type=str,
                     help='The root directory of the index.')
-parser.add_argument('--collection',
-                    default='/path/to/MSMARCO/collection.tsv',
+parser.add_argument('--queries_path',
+                    default='/path/to_queries.tsv',
                     type=str,
-                    help='The path to the MSMARCO collection.')
+                    help='The path to the queries.')
 parser.add_argument('--index_name',
                     default='msmarco',
                     type=str,
                     help='The name of the index.')
-parser.add_argument('--nbits',
-                    default=2,
+parser.add_argument('--k',
+                    default=1_000,
                     type=int,
-                    help='The number of bits for the index.')
+                    help='How many documents to retrieve per query.')
+parser.add_argument('--output_path',
+                    default='output_path.tsv',
+                    type=str,
+                    help='Where to save the ranking results.')
 
 if __name__ == '__main__':
     args = parser.parse_args()
@@ -42,13 +44,10 @@ if __name__ == '__main__':
     with Run().context(RunConfig(nranks=1, experiment='msmarco')):
         config = ColBERTConfig.load_from_checkpoint(args.checkpoint)
         assert config is not None, f'Could not load checkpoint from {args.checkpoint}'
-        config.configure(
-            nbits=args.nbits,
-            root=args.index_root,
-        )
         print('config is')
         pprint.pprint(config)
-        indexer = Indexer(checkpoint=args.checkpoint, config=config)
-        indexer.index(name=args.index_name,
-                      collection=args.collection,
-                      overwrite='resume' if args.resume else True)
+        config.configure(root=args.index_root)
+        searcher = Searcher(index=args.index_name, config=config)
+        queries = Queries(args.queries_path)
+        ranking = searcher.search_all(queries, k=args.k)
+        ranking.save(args.save_path)
