@@ -39,13 +39,13 @@ if __name__ == '__main__':
     args = parser.parse_args()
     with Run().context(RunConfig(nranks=1, experiment='msmarco')):
         config = ColBERTConfig.load_from_checkpoint(args.checkpoint)
+        config.configure(
+            nbits=args.nbits,
+            root=args.index_root,
+        )
         print('config is')
         pprint.pprint(config)
-        indexer = Indexer(
-            checkpoint=args.checkpoint,
-            config=config
-        )
+        indexer = Indexer(checkpoint=args.checkpoint, config=config)
         indexer.index(name=args.index_name,
                       collection=args.collection,
-                      index_root=args.index_root,
                       overwrite='resume' if args.resume else True)
