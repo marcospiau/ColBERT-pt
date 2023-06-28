@@ -52,9 +52,6 @@ def count_tokens(tsv_path, tokenizer, batch_size, max_lines=None):
 
     with open(tsv_path, 'r') as f:
         # decode lines
-        if max_lines is not None:
-            total_lines = min(total_lines, max_lines)
-
         lines = tqdm.tqdm(f, desc='Tokenizing file')
         lines = itertools.islice(lines, max_lines)
         lines = map(str.strip, lines)
