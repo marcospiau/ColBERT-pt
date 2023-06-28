@@ -59,9 +59,10 @@ def count_tokens(tsv_path, tokenizer, batch_size, max_lines=None):
         lines = itertools.islice(lines, max_lines)
         lines = map(str.strip, lines)
         # process lines in batches
-        batches = list(more_itertools.chunked(lines, batch_size))
-        batches = map(process_batch, batches)
-        df = pl.Series(batches).explode().to_frame('length')
+        df = []
+        for batch in more_itertools.chunked(lines, batch_size):
+            df.extend(process_batch(batch))
+        df = pl.Series(df).to_frame('length')
         return df
 
 
