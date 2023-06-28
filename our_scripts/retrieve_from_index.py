@@ -11,7 +11,7 @@ from colbert.infra import ColBERTConfig, Run, RunConfig
 import os
 
 def flat_ranking_to_trec_run(flat_ranking, save_path):
-    fmt_str = '{qid}\tQ0\t{pid}\t{rank}\t{score} X\n'
+    fmt_str = '{qid}\tQ0\t{pid}\t{rank}\t{score}\tX\n'
     total_lines = len(flat_ranking)
     # create directory tree if not exists
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
