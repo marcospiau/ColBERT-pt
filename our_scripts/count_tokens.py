@@ -12,11 +12,13 @@ all datasets, but is enough to get an idea of document (or query) length.
 import argparse
 import itertools
 import multiprocessing as mp
+import os
 
 import more_itertools
 import polars as pl
 import tqdm
 from transformers import AutoTokenizer
+
 pl.Config.set_tbl_rows(n=100)
 
 parser = argparse.ArgumentParser(
@@ -65,6 +67,8 @@ def count_tokens(tsv_path, tokenizer, batch_size, max_lines=None):
 
 if __name__ == '__main__':
     args = parser.parse_args()
+    # enforce tokenizers parallelism to 1
+    os.environ['TOKENIZERS_PARALLELISM'] = 'true'
     tokenizer = AutoTokenizer.from_pretrained(
         args.tokenizer_path, use_fast=args.use_fast_tokenizer)
     df_token_lengths = count_tokens(tsv_path=args.input_tsv,
