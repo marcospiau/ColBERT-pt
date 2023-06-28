@@ -40,8 +40,8 @@ parser.add_argument('--max_lines',
                     type=int,
                     default=None,
                     help='Max number of lines to read from the input file')
-parser.add_argument('--use_fast_tokenizer',
-                    action='store_true',
+parser.add_argument('--nouse_fast_tokenizer',
+                    action='store_false',
                     help='Use fast tokenizer')
 
 
@@ -70,7 +70,7 @@ if __name__ == '__main__':
     # enforce tokenizers parallelism to 1
     os.environ['TOKENIZERS_PARALLELISM'] = 'true'
     tokenizer = AutoTokenizer.from_pretrained(
-        args.tokenizer_path, use_fast=args.use_fast_tokenizer)
+        args.tokenizer_path, use_fast=not args.nouse_fast_tokenizer)
     df_token_lengths = count_tokens(tsv_path=args.input_tsv,
                                     tokenizer=tokenizer,
                                     batch_size=args.batch_size,
