@@ -133,21 +133,21 @@ def chunk_collection(
     new_id = 0
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    with (
-            open(tsv_in, 'r', encoding='utf8') as fin,
-            open(output_dir / 'collection.tsv', 'w', encoding='utf8') as tsv_fout):
+    with open(tsv_in, 'r', encoding='utf8') as fin:
+        with open(output_dir / 'collection.tsv', 'w', encoding='utf8') as tsv_fout:
         # for line in tqdm(itertools.islice(f, None)):
-        for line in tqdm(itertools.islice(fin, max_lines), total=total_lines):
-            doc_id, doc_text = line.strip().split('\t')
-            if max_doc_length is not None:
-                doc_text = doc_text[:max_doc_length]
-            # get setence chunks, used as new documents
-            sentences = get_sentences_from_doc(doc_text, nlp)
-            sentence_chunks = chunk_sentences(sentences, stride, max_length)
-            for chunk_id, chunk in enumerate(sentence_chunks):
-                id_chunk_map.append((new_id, doc_id, chunk_id))
-                new_id += 1
-                tsv_fout.write(f'{new_id}\t{chunk}\n')
+            for line in tqdm(itertools.islice(fin, max_lines),
+                             total=total_lines):
+                doc_id, doc_text = line.strip().split('\t')
+                if max_doc_length is not None:
+                    doc_text = doc_text[:max_doc_length]
+                # get setence chunks, used as new documents
+                sentences = get_sentences_from_doc(doc_text, nlp)
+                sentence_chunks = chunk_sentences(sentences, stride, max_length)
+                for chunk_id, chunk in enumerate(sentence_chunks):
+                    id_chunk_map.append((new_id, doc_id, chunk_id))
+                    new_id += 1
+                    tsv_fout.write(f'{new_id}\t{chunk}\n')
 
         id_chunk_map = pl.DataFrame(
             id_chunk_map, schema=['new_doc_id', 'original_docid', 'chunk_id'])
