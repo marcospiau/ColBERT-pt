@@ -48,7 +48,6 @@ parser.add_argument('--max_doc_length',
                     required=False,
                     help='Max number of characters allowed in a document. '
                     'If None (default), will use sys.maxsize')
-args = parser.parse_args()
 
 
 def count_lines(path: str) -> int:
@@ -152,6 +151,7 @@ def chunk_collection(
 
         id_chunk_map = pl.DataFrame(
             id_chunk_map, schema=['new_doc_id', 'original_docid', 'chunk_id'])
+        id_chunk_map.write_parquet(output_dir / 'id_chunk_map.parquet')
         total_docs_new = len(id_chunk_map)
         new_to_original_docs_describe = id_chunk_map.groupby(
             'original_docid').count()['count'].describe()
