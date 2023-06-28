@@ -146,8 +146,8 @@ def chunk_collection(
                 sentence_chunks = chunk_sentences(sentences, stride, max_length)
                 for chunk_id, chunk in enumerate(sentence_chunks):
                     id_chunk_map.append((new_id, doc_id, chunk_id))
-                    new_id += 1
                     tsv_fout.write(f'{new_id}\t{chunk}\n')
+                    new_id += 1
 
         id_chunk_map = pl.DataFrame(
             id_chunk_map, schema=['new_doc_id', 'original_docid', 'chunk_id'])
