@@ -18,6 +18,7 @@ import more_itertools
 import polars as pl
 import tqdm
 from transformers import AutoTokenizer
+import numpy as np
 
 pl.Config.set_tbl_rows(n=100)
 
@@ -48,6 +49,7 @@ parser.add_argument('--nouse_fast_tokenizer',
 def count_tokens(tsv_path, tokenizer, batch_size, max_lines=None):
     def process_batch(batch):
         lengths = tokenizer(batch, return_length=True).length
+        lengths = np.array(lengths)
         return lengths
 
     with open(tsv_path, 'r') as f:
@@ -58,7 +60,8 @@ def count_tokens(tsv_path, tokenizer, batch_size, max_lines=None):
         # process lines in batches
         df = []
         for batch in more_itertools.chunked(lines, batch_size):
-            df.extend(process_batch(batch))
+            df.append(process_batch(batch))
+        df = np.concatenate(df)
         df = pl.Series(df).to_frame('length')
         return df
 
