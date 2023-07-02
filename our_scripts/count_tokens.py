@@ -19,6 +19,8 @@ import pandas as pd
 import tqdm
 from transformers import AutoTokenizer
 
+pd.options.display.float_format = '{:.2f}'.format
+
 parser = argparse.ArgumentParser(
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--input_file',
