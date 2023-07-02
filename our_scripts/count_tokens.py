@@ -11,16 +11,13 @@ all datasets, but is enough to get an idea of document (or query) length.
 """
 import argparse
 import itertools
-import multiprocessing as mp
 import os
 
 import more_itertools
-import polars as pl
+import numpy as np
+import pandas as pd
 import tqdm
 from transformers import AutoTokenizer
-import numpy as np
-
-pl.Config.set_tbl_rows(n=100)
 
 parser = argparse.ArgumentParser(
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -47,6 +44,7 @@ parser.add_argument('--nouse_fast_tokenizer',
 
 
 def count_tokens(tsv_path, tokenizer, batch_size, max_lines=None):
+
     def process_batch(batch):
         lengths = tokenizer(batch, return_length=True).length
         lengths = np.array(lengths)
@@ -62,8 +60,9 @@ def count_tokens(tsv_path, tokenizer, batch_size, max_lines=None):
         for batch in more_itertools.chunked(lines, batch_size):
             df.append(process_batch(batch))
         df = np.concatenate(df)
-        df = pl.Series(df).to_frame('length')
+        df = pd.Series(df).to_frame('length')
         return df
+
 
 if __name__ == '__main__':
     args = parser.parse_args()
@@ -77,6 +76,5 @@ if __name__ == '__main__':
                                     max_lines=args.max_lines)
     describe = df_token_lengths.describe(
         percentiles=[.25, .5, .75, .9, .95, .99])
-    describe = describe.to_pandas()
     print('Token length statistics:')
     print(describe)
