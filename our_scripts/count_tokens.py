@@ -42,7 +42,7 @@ parser.add_argument('--max_lines',
                     default=None,
                     help='Max number of lines to read from the input file')
 parser.add_argument('--nouse_fast_tokenizer',
-                    action='store_false',
+                    action='store_true',
                     help='Use fast tokenizer')
 
 
@@ -64,7 +64,6 @@ def count_tokens(tsv_path, tokenizer, batch_size, max_lines=None):
         df = np.concatenate(df)
         df = pl.Series(df).to_frame('length')
         return df
-
 
 if __name__ == '__main__':
     args = parser.parse_args()
