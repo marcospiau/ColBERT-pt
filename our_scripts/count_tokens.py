@@ -24,10 +24,10 @@ pl.Config.set_tbl_rows(n=100)
 
 parser = argparse.ArgumentParser(
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('--input_tsv',
+parser.add_argument('--input_file',
                     type=str,
                     default=None,
-                    help='Path to the original tsv file.')
+                    help='Path to the original text file.')
 parser.add_argument('--tokenizer_path',
                     type=str,
                     default=None,
@@ -72,7 +72,7 @@ if __name__ == '__main__':
     os.environ['TOKENIZERS_PARALLELISM'] = 'true'
     tokenizer = AutoTokenizer.from_pretrained(
         args.tokenizer_path, use_fast=not args.nouse_fast_tokenizer)
-    df_token_lengths = count_tokens(tsv_path=args.input_tsv,
+    df_token_lengths = count_tokens(tsv_path=args.input_file,
                                     tokenizer=tokenizer,
                                     batch_size=args.batch_size,
                                     max_lines=args.max_lines)
