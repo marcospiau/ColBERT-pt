@@ -77,6 +77,6 @@ if __name__ == '__main__':
                                     max_lines=args.max_lines)
     describe = df_token_lengths.describe(
         percentiles=[.25, .5, .75, .9, .95, .99])
-    # describe = describe.to_pandas()
+    describe = describe.to_pandas()
     print('Token length statistics:')
     print(describe)
