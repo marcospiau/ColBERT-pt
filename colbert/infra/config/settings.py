@@ -87,12 +87,21 @@ class RunSettings:
         return self.gpus_[self.rank % self.nranks]
 
 
+# @dataclass
+# class TokenizerSettings:
+#     query_token_id: str = DefaultVal("[unused0]")
+#     doc_token_id: str = DefaultVal("[unused1]")
+#     query_token: str = DefaultVal("[Q]")
+#     doc_token: str = DefaultVal("[D]")
+
 @dataclass
 class TokenizerSettings:
-    query_token_id: str = DefaultVal("[unused0]")
-    doc_token_id: str = DefaultVal("[unused1]")
-    query_token: str = DefaultVal("[Q]")
-    doc_token: str = DefaultVal("[D]")
+    query_token: str = DefaultVal("[unused0]")
+    doc_token: str = DefaultVal("[unused1]")
+    query_expand_token: str = DefaultVal("[MASK]")
+    # doc_expand_token: str = DefaultVal(None)
+    marker_token_position: int = DefaultVal(0)
+    validate_special_tokens: bool = DefaultVal(True)
 
 
 @dataclass

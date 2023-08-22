@@ -38,6 +38,7 @@ def tensorize_triples(query_tokenizer, doc_tokenizer, queries, passages, scores,
 
 
 def _sort_by_length(ids, mask, bsize):
+    # PS.: this function can only be used when there is no document expansion
     if ids.size(0) <= bsize:
         return ids, mask, torch.arange(ids.size(0))
 

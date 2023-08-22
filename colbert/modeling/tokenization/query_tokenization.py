@@ -24,14 +24,14 @@ class QueryTokenizer(ColbertTokenizer):
                          tokenizer_kwargs=dict(padding='max_length',
                                                truncation=True,
                                                return_tensors='pt',
-                                               max_length=config.max_length -
-                                               1))
+                                               max_length=config.query_maxlen -
+                                               1),
+                            validate_special_tokens=config.validate_special_tokens)
 
     def tensorize(self, batch_text, bsize=None, context=None):
-        assert type(batch_text) in [list, tuple], (type(batch_text))
         ids, mask = self.encode_texts(batch_text)
         ids, mask = self.add_marker_token(ids, mask)
-        ids, mask = self.process_mask_expansion(ids)
+        ids, mask = self.process_mask_expansion(ids, mask)
         # context is used only for Baleen
         # will not use this, so no need to implement, but we kept here as a
         # reminder. If you want to use this, you need to implement this after mask

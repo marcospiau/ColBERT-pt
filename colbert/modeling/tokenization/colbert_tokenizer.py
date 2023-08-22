@@ -1,5 +1,4 @@
 import torch
-from colbert.utils.utils import insert_constant_column
 
 
 def insert_constant_column(arr, pos, fill_value):
@@ -20,6 +19,7 @@ class ColbertTokenizer:
         mask_expand_token: str = None,
         tokenizer_alias: str = 'TokenizerAliasPlaceholder',
         tokenizer_kwargs: dict = None,
+        validate_special_tokens: bool = True,
     ):
         """Base class for ColBERT tokenizers.
 
@@ -37,6 +37,9 @@ class ColbertTokenizer:
                 to 'TokenizerAliasPlaceholder'.
             tokenizer_kwargs (dict, optional): Keyword arguments for the
                 tokenizer. Defaults to {}.
+            validate_special_tokens (bool, optional): Whether to validate the
+                special tokens. Defaults to True. Ideally this should be True,
+                but it can be turned off for compatibility with some models.
         """
         self.tok = raw_tokenizer
         self.max_length = max_length
@@ -45,25 +48,45 @@ class ColbertTokenizer:
         # self.background_maxlen = 512 - self.query_maxlen + 1  # FIXME: Make this configurable
         self.attend_to_mask_tokens = attend_to_mask_tokens
         self.mask_expand_token = mask_expand_token
-        self.mask_expand_token_id = self.tok.convert_tokens_to_ids(
-            self.mask_expand_token)
+        # tokens_to_ids = self.tok.convert_tokens_to_ids
+        # this is used instead tokenizer.convert_tokens_to_ids to raise an
+        # error for OOV tokens
+        convert_tokens_to_ids = self.tok.vocab.__getitem__
+        if self.mask_expand_token is not None:
+            self.mask_expand_token_id = convert_tokens_to_ids(
+                self.mask_expand_token)
+        else:
+            self.mask_expand_token_id = None
         self.tokenizer_alias = tokenizer_alias
         self.tokenizer_kwargs = tokenizer_kwargs or {}
 
-        self.marker_token_id = self.tok.convert_tokens_to_ids(
-            self.marker_token)
-        # self.marker_token_id cannot be None or equal to unk_token_id or pad_token_id
-        if (self.marker_token_id is None
-                or self.marker_token_id == self.tokenizer.unk_token_id
-                or self.marker_token_id == self.tokenizer.pad_token_id):
-            raise ValueError(
-                f"marker_token_id cannot be None or equal to unk_token_id or pad_token_id. "
-            )
+        self.marker_token_id = convert_tokens_to_ids(self.marker_token)
+        self.validate_special_tokens = validate_special_tokens
+        if validate_special_tokens:
+            self.check_special_tokens()
         self.is_used = False
 
-    def encode_texts(self, texts):
+    def check_special_tokens(self):
+        if self.marker_token_id is None:
+            raise ValueError("marker_token_id cannot be None.")
+        if self.marker_token_id == self.tok.unk_token_id:
+            raise ValueError(
+                "marker_token_id cannot be equal to unk_token_id.")
+        if self.marker_token_id == self.tok.pad_token_id:
+            raise ValueError(
+                "marker_token_id cannot be equal to pad_token_id.")
+        if self.mask_expand_token_id is not None:
+            if self.mask_expand_token_id == self.tok.unk_token_id:
+                raise ValueError(
+                    "mask_expand_token_id cannot be equal to unk_token_id.")
+            if self.mask_expand_token_id == self.tok.pad_token_id:
+                raise ValueError(
+                    "mask_expand_token_id cannot be equal to pad_token_id.")
+
+    def encode_texts(self, batch_text):
         """Encode a list of texts and return the input ids and attention mask."""
-        obj = self.tok(texts, **self.tokenizer_kwargs)
+        assert type(batch_text) in [list, tuple], (type(batch_text))
+        obj = self.tok(batch_text, **self.tokenizer_kwargs)
         ids, mask = obj['input_ids'], obj['attention_mask']
         return ids, mask
 
@@ -75,9 +98,9 @@ class ColbertTokenizer:
 
     def process_mask_expansion(self, ids, mask):
         if self.mask_expand_token is not None:
-            ids[ids == self.pad_token_id] = self.mask_expand_token_id
+            ids[ids == self.tok.pad_token_id] = self.mask_expand_token_id
         if self.attend_to_mask_tokens and self.mask_expand_token is not None:
-            mask[ids == self.mask_token_id] = 1
+            mask[ids == self.mask_expand_token_id] = 1
             assert mask.sum().item() == mask.size(0) * mask.size(1), mask
         return ids, mask
 

@@ -8,6 +8,7 @@ from transformers import XLMRobertaModel, XLMRobertaConfig
 from transformers import ElectraModel, ElectraPreTrainedModel
 from transformers import DebertaV2Model, DebertaV2PreTrainedModel
 from colbert.utils.utils import torch_load_dnn
+from transformers import T5EncoderModel, T5ForConditionalGeneration, T5Config
 
 class XLMRobertaPreTrainedModel(RobertaPreTrainedModel):
     """
@@ -29,7 +30,8 @@ base_class_mapping={
     "bert-base-multilingual-uncased": BertPreTrainedModel,
     # bertimbau
     "neuralmind/bert-base-portuguese-cased": BertPreTrainedModel,
-    "neuralmind/bert-large-portuguese-cased": BertPreTrainedModel
+    "neuralmind/bert-large-portuguese-cased": BertPreTrainedModel,
+
 }
 
 model_object_mapping = {
@@ -43,7 +45,9 @@ model_object_mapping = {
     "bert-base-multilingual-uncased": BertModel,
     # bertimbau
     "neuralmind/bert-base-portuguese-cased": BertModel,
-    "neuralmind/bert-large-portuguese-cased": BertModel
+    "neuralmind/bert-large-portuguese-cased": BertModel,
+    'trl-internal-testing/tiny-T5ForConditionalGeneration-correct-vocab': T5EncoderModel,
+    't5-small': T5EncoderModel
 }
 
 

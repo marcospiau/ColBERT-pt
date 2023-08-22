@@ -20,18 +20,18 @@ class DocTokenizer(ColbertTokenizer):
                          marker_token=config.doc_token,
                          marker_token_position=config.marker_token_position,
                          attend_to_mask_tokens=config.attend_to_mask_tokens,
-                         mask_expand_token=config.doc_expand_token,
+                         mask_expand_token=None,
                          tokenizer_alias='DocTokenizer',
+                         # this config supposes that will be no mask expansion
                          tokenizer_kwargs=dict(padding='longest',
                                                truncation='longest_first',
                                                return_tensors='pt',
-                                               max_length=self.max_length - 1))
+                                               max_length=config.doc_maxlen - 1))
 
     def tensorize(self, batch_text, bsize=None):
-        assert type(batch_text) in [list, tuple], (type(batch_text))
         ids, mask = self.encode_texts(batch_text)
         ids, mask = self.add_marker_token(ids, mask)
-        ids, mask = self.process_mask_expansion(ids)
+        ids, mask = self.process_mask_expansion(ids, mask)
 
         if bsize is not None:
             ids, mask, reverse_indices = _sort_by_length(ids, mask, bsize)
