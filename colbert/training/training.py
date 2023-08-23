@@ -59,7 +59,7 @@ def load_checkpoint_v2(path, colbert, optimizer):
 
 def train(config: ColBERTConfig, triples, queries=None, collection=None):
     config.checkpoint = config.checkpoint or 'bert-base-uncased'
-    wandb_run = wandb.init(**config.wandb.val, config=vars(config))
+    wandb_run = wandb.init(**config.wandb, config=vars(config))
 
     if config.rank < 1:
         config.help()
@@ -161,6 +161,7 @@ def train(config: ColBERTConfig, triples, queries=None, collection=None):
                     scores, ib_loss = scores
 
                 scores = scores.view(-1, config.nway)
+
 
                 if len(target_scores) and not config.ignore_scores:
                     target_scores = torch.tensor(target_scores).view(-1, config.nway).to(DEVICE)

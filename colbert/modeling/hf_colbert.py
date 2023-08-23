@@ -8,7 +8,7 @@ from transformers import XLMRobertaModel, XLMRobertaConfig
 from transformers import ElectraModel, ElectraPreTrainedModel
 from transformers import DebertaV2Model, DebertaV2PreTrainedModel
 from colbert.utils.utils import torch_load_dnn
-from transformers import T5EncoderModel, T5ForConditionalGeneration, T5Config
+from transformers import T5EncoderModel, T5PreTrainedModel, T5Config
 
 class XLMRobertaPreTrainedModel(RobertaPreTrainedModel):
     """
@@ -31,6 +31,8 @@ base_class_mapping={
     # bertimbau
     "neuralmind/bert-base-portuguese-cased": BertPreTrainedModel,
     "neuralmind/bert-large-portuguese-cased": BertPreTrainedModel,
+    # t5
+    't5-small': T5PreTrainedModel,
 
 }
 
@@ -82,7 +84,7 @@ def class_factory(name_or_path):
     elif model_object_mapping.get(name_or_path) is not None:
         model_class_object = model_object_mapping.get(name_or_path)
     else:
-        raise ValueError("Could not find correct model class for the model type {model_type} in transformers library")
+        raise ValueError(f"Could not find correct model class for the model type '{model_type}' in transformers library")
 
 
     class HF_ColBERT(pretrained_class_object):

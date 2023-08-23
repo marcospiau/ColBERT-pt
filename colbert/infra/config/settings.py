@@ -130,50 +130,35 @@ class QuerySettings:
 @dataclass
 class TrainingSettings:
     similarity: str = DefaultVal('cosine')
-
     bsize: int = DefaultVal(32)
-
     accumsteps: int = DefaultVal(1)
-
     lr: float = DefaultVal(1e-5)
-
     maxsteps: int = DefaultVal(500_000)
-
     # this is not being used! 
     save_every: int = DefaultVal(None)
-
-    resume: bool = DefaultVal(False)
-
+    # resume: bool = DefaultVal(False) this is probably not being used and 
+    # related to indexing so I commented it out
     ## NEW:
     warmup: int = DefaultVal(20_000)
-
     warmup_bert: int = DefaultVal(None)
-
     relu: bool = DefaultVal(False)
-
     nway: int = DefaultVal(2)
-
     use_ib_negatives: bool = DefaultVal(True)
-
     reranker: bool = DefaultVal(False)
-
     distillation_alpha: float = DefaultVal(1.0)
-
     ignore_scores: bool = DefaultVal(False)
-
     model_name: str = DefaultVal(None) # DefaultVal('bert-base-uncased')
-
     # marcospiau
     stdout_log_every: int = DefaultVal(100)
     checkpoints_path: str = DefaultVal('checkpoints_path')
     continue_from_checkpoint: str = DefaultVal(None)
-
     # wandb stuff
-    wandb = DefaultVal(dict(
-        project='colbert-pt-br',
-        # set to 'disable' to disable wandb
-        mode='online'
-    ))
+    wandb: str = DefaultVal(None)
+    # wandb = DefaultVal(dict(
+    #     project='colbert-pt-br',
+    #     # set to 'disable' to disable wandb
+    #     mode='online'
+    # ))
     
 
 
