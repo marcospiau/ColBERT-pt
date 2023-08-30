@@ -23,9 +23,14 @@ class ColBERT(BaseColBERT):
         ColBERT.try_load_torch_extensions(self.use_gpu)
 
         if self.colbert_config.mask_punctuation:
-            self.skiplist = {w: True
-                             for symbol in string.punctuation
-                             for w in [symbol, self.raw_tokenizer.encode(symbol, add_special_tokens=False)[0]]}
+            # self.skiplist = {w: True
+            #                  for symbol in string.punctuation
+            #                  for w in [symbol, self.raw_tokenizer.encode(symbol, add_special_tokens=False)[0]]}
+            self.tokens_to_skip = {
+                w: True
+                for w in filter(None, map(
+                self.doc_tokenizer.tok.vocab.get,
+                string.punctuation))}
         self.pad_token = self.raw_tokenizer.pad_token_id
 
 
