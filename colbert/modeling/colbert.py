@@ -28,9 +28,9 @@ class ColBERT(BaseColBERT):
             #                  for w in [symbol, self.raw_tokenizer.encode(symbol, add_special_tokens=False)[0]]}
             self.tokens_to_skip = {
                 w: True
-                for w in filter(None, map(
-                self.doc_tokenizer.tok.vocab.get,
-                string.punctuation))}
+                for w in map(self.doc_tokenizer.tok.vocab.get,
+                             string.punctuation)
+                if w is not None}
         self.pad_token = self.raw_tokenizer.pad_token_id
 
 
