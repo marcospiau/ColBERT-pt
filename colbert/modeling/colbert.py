@@ -26,7 +26,7 @@ class ColBERT(BaseColBERT):
             # self.skiplist = {w: True
             #                  for symbol in string.punctuation
             #                  for w in [symbol, self.raw_tokenizer.encode(symbol, add_special_tokens=False)[0]]}
-            self.tokens_to_skip = {
+            self.skiplist = {
                 w: True
                 for w in map(self.doc_tokenizer.tok.vocab.get,
                              string.punctuation)
