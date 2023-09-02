@@ -67,24 +67,31 @@ def find_class_names(model_type, class_type):
 def class_factory(name_or_path):
     loadedConfig  = AutoConfig.from_pretrained(name_or_path)
     model_type = loadedConfig.model_type
-    pretrained_class = find_class_names(model_type, 'pretrainedmodel')
-    model_class = find_class_names(model_type, 'model')
-
-    if pretrained_class is not None:
-        pretrained_class_object = getattr(transformers, pretrained_class)
-    elif model_type == 'xlm-roberta':
-        pretrained_class_object = XLMRobertaPreTrainedModel
-    elif base_class_mapping.get(name_or_path) is not None:
-        pretrained_class_object = base_class_mapping.get(name_or_path)
+    # this is very hacky but allows us to use T5 without having to change the
+    # code too much
+    if model_type == 't5':
+        pretrained_class_object = T5PreTrainedModel
+        model_class = T5EncoderModel
+        model_class_object = T5EncoderModel
     else:
-        raise ValueError("Could not find correct pretrained class for the model type {model_type} in transformers library")
+        pretrained_class = find_class_names(model_type, 'pretrainedmodel')
+        model_class = find_class_names(model_type, 'model')
 
-    if model_class != None:
-        model_class_object = getattr(transformers, model_class)
-    elif model_object_mapping.get(name_or_path) is not None:
-        model_class_object = model_object_mapping.get(name_or_path)
-    else:
-        raise ValueError(f"Could not find correct model class for the model type '{model_type}' in transformers library")
+        if pretrained_class is not None:
+            pretrained_class_object = getattr(transformers, pretrained_class)
+        elif model_type == 'xlm-roberta':
+            pretrained_class_object = XLMRobertaPreTrainedModel
+        elif base_class_mapping.get(name_or_path) is not None:
+            pretrained_class_object = base_class_mapping.get(name_or_path)
+        else:
+            raise ValueError("Could not find correct pretrained class for the model type {model_type} in transformers library")
+
+        if model_class != None:
+            model_class_object = getattr(transformers, model_class)
+        elif model_object_mapping.get(name_or_path) is not None:
+            model_class_object = model_object_mapping.get(name_or_path)
+        else:
+            raise ValueError(f"Could not find correct model class for the model type '{model_type}' in transformers library")
 
 
     class HF_ColBERT(pretrained_class_object):

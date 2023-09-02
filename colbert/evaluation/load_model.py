@@ -11,6 +11,8 @@ from colbert.utils.utils import print_message, load_checkpoint
 
 
 def load_model(args, do_print=True):
+    raise NotImplementedError(
+        "This function assumes 'bert-base-uncased' as the model name.")
     colbert = ColBERT.from_pretrained('bert-base-uncased',
                                       query_maxlen=args.query_maxlen,
                                       doc_maxlen=args.doc_maxlen,
