@@ -43,13 +43,15 @@ class RunSettings:
         value = list(map(int, value))
         value = sorted(list(set(value)))
 
-        assert all(device_idx in range(0, self.total_visible_gpus) for device_idx in value), value
+        assert all(device_idx in range(0, self.total_visible_gpus)
+                   for device_idx in value), value
 
         return value
 
     @property
     def index_root_(self):
-        return self.index_root or os.path.join(self.root, self.experiment, 'indexes/')
+        return self.index_root or os.path.join(self.root, self.experiment,
+                                               'indexes/')
 
     @property
     def script_name_(self):
@@ -68,7 +70,6 @@ class RunSettings:
                 except:
                     pass
 
-
             assert script_path.endswith('.py')
             script_name = script_path.replace('/', '.').strip('.')[:-3]
 
@@ -80,101 +81,35 @@ class RunSettings:
 
     @property
     def path_(self):
-        return os.path.join(self.root, self.experiment, self.script_name_, self.name)
+        return os.path.join(self.root, self.experiment, self.script_name_,
+                            self.name)
 
     @property
     def device_(self):
         return self.gpus_[self.rank % self.nranks]
 
 
-# @dataclass
-# class TokenizerSettings:
-#     query_token_id: str = DefaultVal("[unused0]")
-#     doc_token_id: str = DefaultVal("[unused1]")
-#     query_token: str = DefaultVal("[Q]")
-#     doc_token: str = DefaultVal("[D]")
-
-@dataclass
-class TokenizerSettings:
-    query_token: str = DefaultVal("[unused0]")
-    doc_token: str = DefaultVal("[unused1]")
-    query_expand_token: str = DefaultVal("[MASK]")
-    # doc_expand_token: str = DefaultVal(None)
-    marker_token_position: int = DefaultVal(0)
-    validate_special_tokens: bool = DefaultVal(True)
-
-
 @dataclass
 class ResourceSettings:
     checkpoint: str = DefaultVal(None)
-    triples: str = DefaultVal(None)
+    # triples: str = DefaultVal(None)
     collection: str = DefaultVal(None)
     queries: str = DefaultVal(None)
     index_name: str = DefaultVal(None)
 
 
 @dataclass
-class DocSettings:
-    dim: int = DefaultVal(128)
-    doc_maxlen: int = DefaultVal(300)
-    mask_punctuation: bool = DefaultVal(True)
-
-
-@dataclass
-class QuerySettings:
-    query_maxlen: int = DefaultVal(32)
-    attend_to_mask_tokens : bool = DefaultVal(False)
-    interaction: str = DefaultVal('colbert')
-
-
-@dataclass
-class TrainingSettings:
-    similarity: str = DefaultVal('cosine')
-    bsize: int = DefaultVal(32)
-    accumsteps: int = DefaultVal(1)
-    lr: float = DefaultVal(1e-5)
-    maxsteps: int = DefaultVal(500_000)
-    # this is not being used! 
-    save_every: int = DefaultVal(None)
-    # resume: bool = DefaultVal(False) this is probably not being used and 
-    # related to indexing so I commented it out
-    ## NEW:
-    warmup: int = DefaultVal(20_000)
-    warmup_bert: int = DefaultVal(None)
-    relu: bool = DefaultVal(False)
-    nway: int = DefaultVal(2)
-    use_ib_negatives: bool = DefaultVal(True)
-    reranker: bool = DefaultVal(False)
-    distillation_alpha: float = DefaultVal(1.0)
-    ignore_scores: bool = DefaultVal(False)
-    model_name: str = DefaultVal(None) # DefaultVal('bert-base-uncased')
-    # marcospiau
-    stdout_log_every: int = DefaultVal(100)
-    checkpoints_path: str = DefaultVal('checkpoints_path')
-    continue_from_checkpoint: str = DefaultVal(None)
-    # wandb stuff
-    wandb: str = DefaultVal(None)
-    # wandb = DefaultVal(dict(
-    #     project='colbert-pt-br',
-    #     # set to 'disable' to disable wandb
-    #     mode='online'
-    # ))
-    
-
-
-@dataclass
 class IndexingSettings:
     index_path: str = DefaultVal(None)
-
     nbits: int = DefaultVal(1)
-
     kmeans_niters: int = DefaultVal(4)
-
     resume: bool = DefaultVal(False)
 
     @property
     def index_path_(self):
-        return self.index_path or os.path.join(self.index_root_, self.index_name)
+        return self.index_path or os.path.join(self.index_root_,
+                                               self.index_name)
+
 
 @dataclass
 class SearchSettings:
