@@ -5,12 +5,13 @@ import random
 
 from collections import defaultdict, OrderedDict
 
-from colbert.parameters import DEVICE
+# from colbert.parameters import DEVICE
 from colbert.modeling.colbert import ColBERT
 from colbert.utils.utils import print_message, load_checkpoint
-from colbert.evaluation.load_model import load_model
+# from colbert.evaluation.load_model import load_model
 from colbert.utils.runs import Run
 
+DEVICE = torch.device("cuda")
 
 def load_queries(queries_path):
     queries = OrderedDict()
