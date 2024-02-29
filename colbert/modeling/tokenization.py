@@ -3,11 +3,12 @@ import string
 import torch
 from transformers import AutoTokenizer
 
-from colbert.clean_training_codes.modeling import MyColbertConfig
+from colbert.clean_training_codes.modeling import ColbertConfig
 from colbert.modeling.tokenization.utils import (_sort_by_length,
                                                  _split_into_batches)
 
 from transformers import BatchEncoding
+from tokenizers import AddedToken
 
 
 def insert_constant_column(arr, pos, fill_value):
@@ -19,7 +20,24 @@ def insert_constant_column(arr, pos, fill_value):
     return torch.cat([begin, fill, end], dim=-1)
 
 
+def add_special_tokens(raw_tokenizer, marker_token, mask_expand_token):
+    """Prepare the raw tokenizer, including marker and expansion as special
+        if they are not already.
+    """
+    tokens_to_add = [marker_token, mask_expand_token]
+    for token in tokens_to_add:
+        raw_tokenizer.add_tokens(AddedToken(token,
+                                            rstrip=False,
+                                            lstrip=False,
+                                            single_word=False,
+                                            normalized=False,
+                                            special=True),
+                                 special_tokens=True)
+    return raw_tokenizer
+
+
 class ColbertTokenizer:
+
     def __init__(
         self,
         tokenizer_model_path: str,
@@ -61,6 +79,10 @@ class ColbertTokenizer:
         self.tokenizer_model_path = tokenizer_model_path
         self.raw_tokenizer = AutoTokenizer.from_pretrained(
             tokenizer_model_path)
+        self.raw_tokenizer = add_special_tokens(
+            self.raw_tokenizer,
+            marker_token=marker_token,
+            mask_expand_token=mask_expand_token)
         self.max_length = max_length
         self.marker_token = marker_token
         self.marker_token_position = marker_token_position
@@ -147,10 +169,12 @@ class ColbertTokenizer:
                     0) * attention_mask.size(1), attention_mask
         return input_ids, attention_mask
 
-    def add_punctuation_mask(self, input_ids):
-        if self.mask_punctuation:
-            return torch.isin(input_ids, self.tokens_to_skip, invert=True)
-        return None
+    def get_output_scores_mask(self, input_ids):
+        # pad token scores are always zero
+        mask = input_ids != self.encoder.config.pad_token_id
+        if self.mask_punctuation is True:
+            mask[torch.isin(input_ids, self.tokens_to_skip, invert=False)] = 0
+        return mask
 
     def debug_once(self, batch_text, bsize, ids, mask):
         if self.is_used is False:
@@ -176,17 +200,18 @@ class ColbertTokenizer:
             input_ids, attention_mask)
         input_ids, attention_mask = self.process_mask_expansion(
             input_ids, attention_mask)
-        punctuation_mask = self.add_punctuation_mask(input_ids)
+        output_scores_mask = self.get_output_scores_mask(input_ids)
         self.debug_once(batch_text, None, input_ids, attention_mask)
         # using huggingface tokenizers to avoid having to implement
         batch_encoding = BatchEncoding(
             data=dict(input_ids=input_ids,
                       attention_mask=attention_mask,
-                      punctuation_mask=punctuation_mask))
+                      output_scores_mask=output_scores_mask))
         return batch_encoding
 
 
 class DocTokenizer(ColbertTokenizer):
+
     def __init__(self, colbert_config: MyColbertConfig):
         """Tokenizer for document text.
 
@@ -223,26 +248,27 @@ class DocTokenizer(ColbertTokenizer):
             return batches, reverse_indices
         return ids, mask
 
-    def _sort_by_length(self, input_ids, attention_mask, punctuation_mask,
+    def _sort_by_length(self, input_ids, attention_mask, output_scores_mask,
                         bsize):
-        # I modified this function to also account for punctuation_mask
+        # I modified this function to also account for output_scores_mask
         if self.mask_expand_token is not None:
             raise NotImplementedError(
                 'This function cannot be used when there is document '
                 'expansion.')
         if input_ids.size(0) <= bsize:
-            return input_ids, attention_mask, punctuation_mask, torch.arange(
+            return input_ids, attention_mask, output_scores_mask, torch.arange(
                 input_ids.size(0))
 
-        combined_mask = attention_mask * punctuation_mask
+        combined_mask = attention_mask * output_scores_mask
         indices = combined_mask.sum(-1).sort().indices
         reverse_indices = indices.sort().indices
 
         return (input_ids[indices], attention_mask[indices],
-                punctuation_mask[indices], reverse_indices)
+                output_scores_mask[indices], reverse_indices)
 
 
 class QueryTokenizer(ColbertTokenizer):
+
     def __init__(self, colbert_config: MyColbertConfig):
         """Tokenizer for query text.
 

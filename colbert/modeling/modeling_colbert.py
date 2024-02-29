@@ -19,7 +19,6 @@ class ColbertConfig(PretrainedConfig):
                  query_token: str = '<extra_id_0>',
                  doc_token: str = '<extra_id_1>',
                  query_expand_token: str = '<extra_id_2>',
-                 marker_token_position: int = 0,
                  validate_special_tokens: bool = True,
                  **kwargs):
         self.dim = dim
@@ -31,7 +30,6 @@ class ColbertConfig(PretrainedConfig):
         self.query_token = query_token
         self.doc_token = doc_token
         self.query_expand_token = query_expand_token
-        self.marker_token_position = marker_token_position
         self.validate_special_tokens = validate_special_tokens
         self.nway = nway
         self.encoder_class_str = encoder_class_str
@@ -58,29 +56,21 @@ class ColbertModel(PreTrainedModel):
         # TODO: check how to init weights for linear layer
         self.eval()
 
-    def mask(self, input_ids, punctuation_mask=None):
-        """Combine attention_mask and punctuation_mask to create a mask
-            used for ColBERT score computation. If punctuation_mask is 1, then
-            the mask will be the same as attention_mask. Otherwise, the
-            mask will be a combination of attention_mask and punctuation_mask.
-            This is used mostly for documents, where we want to mask
-            punctuation tokens and save space when building the index.
-        """
-        # TODO: check the dtype of this mask (float vs half)
-        mask = input_ids != self.encoder.config.pad_token_id
-        if punctuation_mask is not None:
-            mask = mask * punctuation_mask
-        mask = mask.unsqueeze(2)
-        return mask
+    # def mask(self, input_ids, punctuation_mask=None):
+    #     # TODO: check the dtype of this mask (float vs half)
+    #     mask = input_ids != self.encoder.config.pad_token_id
+    #     if punctuation_mask is not None:
+    #         mask = mask * punctuation_mask
+    #     mask = mask.unsqueeze(2)
+    #     return mask
 
-    def forward(self, input_ids, attention_mask, punctuation_mask=1):
-        """Forward pass common to both query and doc"""
+    def forward_reps(self, input_ids, attention_mask, output_scores_mask):
+        """Forward token representations"""
         x = self.encoder(input_ids,
                          attention_mask=attention_mask).last_hidden_state
         x = self.linear(x)
-        mask = self.mask(input_ids, punctuation_mask)
-        x = x * mask
-        mask = mask.bool()
+        x =  x * output_scores_mask.unsqueeze(2).float()
+        x = F.normalize(x, p=2, dim=2, eps=1e-12)
         # default value of eps is 1e-12 can cause nan values for fp16
         # https://github.com/pytorch/pytorch/issues/32137
         # https://github.com/pytorch/pytorch/pull/33596
@@ -88,32 +78,100 @@ class ColbertModel(PreTrainedModel):
         # x = F.normalize(x.float(), p=2, dim=2, eps=1e-12).to(x.dtype)
         # ValueError: Attempting to unscale FP16 gradients.
         # https://discuss.pytorch.org/t/valueerror-attemting-to-unscale-fp16-gradients/81372/2
-        x = F.normalize(x, p=2, dim=2, eps=1e-12)
-        return x, mask
+        return x, output_scores_mask
 
-    def query(self, input_ids, attention_mask, punctuation_mask=None):
-        Q, _ = self(input_ids, attention_mask, punctuation_mask)
+
+    def query(self, input_ids, attention_mask, output_scores_mask):
+        Q, _ = self(input_ids, attention_mask, output_scores_mask)
+        return Q
+        Q = self.encoder(input_ids,
+                         attention_mask=attention_mask).last_hidden_state
+        Q = self.linear(x)
+        Q = F.normalize(Q, p=2, dim=2, eps=1e-12)
         return Q
 
-    def doc(self, input_ids, attention_mask, punctuation_mask=1):
+    def doc(self, input_ids, attention_mask, output_scores_mask=1):
         """Forward pass for documents.
 
         Args:
             input_ids (torch.Tensor): input ids, shape (bsize, doc_len)
             attention_mask (torch.Tensor): attention mask, shape
                 (bsize, doc_len)
-            punctuation_mask (int, optional): mask to zero out score for 
+            output_scores_mask (int, optional): mask to zero out score for 
                 punctuation tokens. Defaults to 1 (no removal).
         Returns:
             tuple: document embeddings and mask. Mask will be used to compute
                 ColBERT score.
         """
-        D, mask = self(input_ids, attention_mask, punctuation_mask)
+        D, mask = self(input_ids, attention_mask, output_scores_mask)
         # TODO: fazer o cast pra float16 aqui
         # D = torch.nn.functional.normalize(D, p=2, dim=2)
         # if self.use_gpu:
         #     D = D.half()
         return D, mask
+    
+    # https://huggingface.co/sebastian-hofstaetter/colbert-distilbert-margin_mse-T2-msmarco
+    def forward(self, query_encodings, doc_encodings):
+        """Forward pass for queries, computes scores"""
+        Q = self.query(**query_encodings)
+        D, D_mask = self.doc(**doc_encodings)
+
+    # def forward(self, input_ids, attention_mask, output_scores_mask=1):
+    #     """Forward pass common to both query and doc"""
+    #     x = self.encoder(input_ids,
+    #                      attention_mask=attention_mask).last_hidden_state
+    #     x = self.linear(x)
+    #     x = x * mask
+    #     mask = mask.bool()
+    #     x = F.normalize(x, p=2, dim=2, eps=1e-12)
+    #     return x, mask
+
+
+
+# Q = torch.rand(1, 32, 384)
+# Q = torch.nn.functional.normalize(Q, p=2, dim=2)
+# Q_mask = torch.ones(1, 32).bool()
+# D = torch.rand(8, 128, 384)
+# D = torch.nn.functional.normalize(D, p=2, dim=2)
+# D_mask = torch.ones(8, 128).bool()
+
+def compute_token_level_scores(Q,  D):
+    scores = D @ Q.permute(0, 2, 1)
+    return scores
+
+def reduce_token_scores(token_scores, Q_mask, D_mask):
+    # mask out padding on the doc dimension (mask by -1000, because max should
+    # not select those, setting it to 0 might select them)
+    D_padding = ~D_mask.view(token_scores.size(0),
+                             token_scores.size(1)).bool()
+    token_scores[D_padding] = float('-inf')
+    # max pooling over document dimension
+    scores = token_scores.max(1).values
+    # return scores
+
+    # mask out paddding query values
+    # scores[Q_mask] = 0 # PRECISA ARRUMAR
+    # scores = scores * Q_mask.unsqueeze(1).float()  # torch.Size([1, 8, 32])
+    # TALVEZ Não precise dessa parte aqui, porque output scores de query já ficam zerados se a mask zerar antes
+    scores = scores * Q_mask.float() ## torch.Size([8])
+    scores = scores.sum(-1)
+    return scores
+
+def colbert_scores_complete(Q, D, Q_mask, D_mask):
+    scores = compute_token_level_scores(Q, D)
+    scores = reduce_token_scores(scores, Q_mask, D_mask)
+    return scores
+
+scores1 = compute_token_level_scores(Q,  D); scores1.size()
+# torch.Size([8, 128, 32])
+scores2 = reduce_token_scores(scores1, Q_mask, D_mask); scores2.size()
+
+scores3 = colbert_scores_complete(Q, D, Q_mask, D_mask); scores3.size()
+assert scores2.allclose(scores3)
+
+
+
+
 
 
 # TODO: check docstrings
